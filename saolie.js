@@ -2,25 +2,30 @@
 var sett,t=0
 
 // sett = setInterval(time,100);
-
+var board = make_board()
+var playboard = make_board(-1)
 function main() {
 	var canvas = document.getElementById('main');
 	var c = canvas.getContext("2d");
-	draw_border()
-	var board = make_board();
-	console.log(board)
-	var playboard = make_board(-1);
+	draw_border();
+	
+	// var pboard = this.playboard;
+	var board = this.board;
+	// var board = make_board()
+	var playboard = make_board(-1)
 	var x,y;
+
 	for (var i = 0; i < 10; i++) {
 		x = Math.floor(Math.random()*10);
 		y = Math.floor(Math.random()*10);
 		// console.log(board[x],x,y)
-		if (board[x][y]==-1) {i-=1}
+		if (board[x][y]==-2) {i-=1}
 		board[x][y] = -2;
 	}
-	// console.log(board)
-	var board = cal_border(board);
-	draw_zone(playboard)
+
+	// var board = cal_border(JSON.parse(JSON.stringify(board)));
+	var board = cal_border(board)
+	draw_zone(board)
 	// console.log(playboard)
 
 }
@@ -48,9 +53,9 @@ function draw_border() {
 	c.lineWidth = 2
 	c.beginPath();
 	c.moveTo(450,100);
-	c.lineTo(450,600);
-	c.lineTo(850,600);
-	c.lineTo(850,100);
+	c.lineTo(450,505);
+	c.lineTo(855,505);
+	c.lineTo(855,100);
 	c.closePath();
 	c.stroke();
 }
@@ -61,15 +66,15 @@ function draw_block(x,y,type) {
 	//type:-1 hidden,  -2 bomb,2 
 	if (type==-2) {
 		c.fillStyle="#aaaaaa";
-		c.fillRect(x,y,30,30);
+		c.fillRect(x,y,35,35);
 	}
 	else if (type==-1){
 		c.fillStyle="#cc00cc";
-		c.fillRect(x,y,30,30);
+		c.fillRect(x,y,35,35);
 	}
 	else {
 		c.fillStyle="#ffffff";
-		c.fillRect(x,y,30,30);
+		c.fillRect(x,y,35,35);
 		if (type==0) {}
 		else {
 			c.font = "30px bold 黑体";
@@ -82,12 +87,13 @@ function draw_block(x,y,type) {
 }
 
 function cal_border(l) {
-	var board = l;
+	// var b = JSON.parse(JSON.stringify(l));
+	var b = l;
 	var t = 0
 	for (var y = 0; y < l.length; y++) {
 		var lay1 = l[y]
 		for (var x = 0; x < lay1.length; x++) {
-			if (lay1[x]==-1) {console.log('jump');continue;}
+			if (lay1[x]==-2) {console.log('jump');continue;}
 			t = 0;
 			// console.log(y,x)
 			// console.log(l[y-1])
@@ -123,12 +129,12 @@ function cal_border(l) {
 			// if (l[y-1][x-1]==-1) {t+=1;}
 			// if (l[y][x+1]==-1) {t+=1;}
 			// if (l[y][x-1]==-1) {t+=1;}
-			board[y][x] = t;
+			b[y][x] = t;
 		}
 
 	}
 	// console.log(board)
-	return board
+	return b
 }
 
 function time() {
@@ -139,11 +145,23 @@ function time() {
 
 function cl(ev) {
 	console.log(ev);
+	// console.log(ev.x,ev.y,ev.offsetX, ev.offsetY)
 	// console.log('1')
-	var x = ev.x
-	var y = ev.y
-	console.log(x,y)
+	var sx = ev.offsetX;
+	var sy = ev.offsetY;
+	var x = Math.floor((sx-450)/40);
+	var y = Math.floor((sy-100)/40);
+	console.log(sx-450,sy-100,x,y,this.board)
+	if (x<10&&x>-1&&y<10&&y>-1){
+		this.board[y][x] = 9
+		clean_canvas()
+		draw_border()
+		draw_zone(this.board)
+	}
+}
 
+function find_blank() {
+	// body...
 }
 
 function make_board(num=0) {
@@ -156,5 +174,8 @@ function make_board(num=0) {
 	}
 	return li
 }	
-
+// var playboard = make_board(-1);
+// var board = make_board();
+// global board;
+// console.log(this.board)
 main()
