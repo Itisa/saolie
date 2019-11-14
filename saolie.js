@@ -1,11 +1,12 @@
-var size = 15
-var bombs = 60
-var sett,t=0
+var size = 10
+var bombs = 10
+var sett,t=0,dataev,if_click=false
 
-// sett = setInterval(time,100);
+sett = setInterval(time,100);
 var board = make_board()
 var playboard = make_board(-1)
 var if_init = false
+var if_lose,if_win
 var mousex = 0
 var mousey = 0
 
@@ -14,33 +15,27 @@ function main() {
 	var c = canvas.getContext("2d");
 	draw_border();
 	draw_zone(playboard)
-	// console.log(playboard,'pboard')
+	console.log(playboard,'pboard')
 	// console.log(board,'board')
 }
 
 function init(cx,cy) {
 	if_init = true
 	var board = this.board;
-	// var board = make_board()
-	// var playboard = make_board(-1)
 	var x,y;
 
 	for (var i = 0; i < bombs; i++) {
 		x = Math.floor(Math.random()*size);
 		y = Math.floor(Math.random()*size);
-		// console.log(board[x],x,y)
 		if (cx<y+2&&cx>y-2&&cy<x+2&&cy>x-2) {i-=1;continue;}
-
 		if (board[x][y]==-2) {i-=1}
-
 		board[x][y] = -2;
 	}
 
 	// var board = cal_border(JSON.parse(JSON.stringify(board)));
 	var board = cal_border(board)
-	// draw_zone(playboard)
-	draw_zone(board)
-	// console.log(playboard,'pboard')
+	draw_zone(playboard)
+	// draw_zone(board)
 	console.log(board,'board')
 }
 
@@ -88,7 +83,6 @@ function draw_block(x,y,type) {
 	}
 	else if (type==-3) {
 		c.fillStyle="red";
-		console.log('in')
 		c.fillRect(x,y,35,35);
 	}
 	else {
@@ -148,23 +142,43 @@ function cal_border(l) {
 
 function time() {
 	if (t>0) {
-		t-=1
+		if_click=true;
+		t-=1;
+	}
+	else if (if_click==true){
+		oncl(dataev);
+		if_click=false;
 	}
 }
 
-function keydown(ev) {
-	var k = ev.keyCode;
-	// console.log(ev)
-	if (true){
-		var x = Math.floor(mousex/40);
-		var y = Math.floor(mousey/40);
-		if (x<size&&x>-1&&y<size&&y>-1){
-			if (playboard[y][x]==-1) {playboard[y][x]=-3;}
-			else if (playboard[y][x]==-3) {playboard[y][x]=-1;}
-		}
-		clean_canvas()
-		draw_zone(this.playboard)
+function right_mouse() {
+	var x = Math.floor(mousex/40);
+	var y = Math.floor(mousey/40);
+	if (x<size&&x>-1&&y<size&&y>-1){
+		if (playboard[y][x]==-1) {playboard[y][x]=-3;}
+		else if (playboard[y][x]==-3) {playboard[y][x]=-1;}
 	}
+	clean_canvas()
+	draw_zone(this.playboard)
+	draw_win()
+}
+
+function lr_mouse(ev) {
+	if (if_init==false) {init(x,y)}
+	var sx = ev.offsetX;
+	var sy = ev.offsetY;
+	var x = Math.floor(sx/40);
+	var y = Math.floor(sy/40);
+
+	if (y>0) {find_blank(board,x,y-1,true)}
+	if (y<size-1) {find_blank(board,x,y+1,true)}
+	if (x>0) {find_blank(board,x-1,y,true)}
+	if (x<size-1) {find_blank(board,x+1,y,true)}
+	if (y>0&&x>0) {find_blank(board,x-1,y-1,true)}
+	if (y>0&&x<size-1) {find_blank(board,x+1,y-1,true)}
+	if (y<size-1&&x>0) {find_blank(board,x-1,y+1,true)}
+	if (y<size-1&&x<size-1) {find_blank(board,x+1,y+1,true)}
+
 }
 
 function move(ev) {
@@ -173,38 +187,60 @@ function move(ev) {
 	mousey = ev.offsetY;
 }
 
-
-function cl(ev) {
-	// console.log(ev);
+function oncl(ev) {
 	var sx = ev.offsetX;
 	var sy = ev.offsetY;
 	var x = Math.floor(sx/40);
 	var y = Math.floor(sy/40);
-	if (if_init==false) {init(x,y)}
-	// console.log(sx-450,sy-100,x,y,this.board)
-	if (x<size&&x>-1&&y<size&&y>-1){
-		find_blank(board,x,y)
-	}
+	var which = ev.which
 	// console.log(playboard,'pboard')
-	var times = 0;
-	for (var i = 0; i < this.playboard.length; i++) {
-		var li = this.playboard[i]
-
-		for (var j = 0; j < li.length; j++) {
-			if(li[j]==-1&&board[i][j]!=-2) {times += 1;}
+	if (which==1) {
+		if (if_init==false) {init(x,y)}
+		// console.log(sx-450,sy-100,x,y,this.board)
+		if (x<size&&x>-1&&y<size&&y>-1){
+			find_blank(board,x,y)
 		}
-	}
 
-	if (times==0) {win();}
+		///ifwin
+		var times = 0;
+		for (var i = 0; i < this.playboard.length; i++) {
+			var li = this.playboard[i]
+
+			for (var j = 0; j < li.length; j++) {
+				if(li[j]==-1&&board[i][j]!=-2) {times += 1;}
+			}
+		}
+		if (times==0) {if_win=true;draw_win();}
+	}
+	else if (which==3) {
+		right_mouse()
+	}
 }
 
-function find_blank(board,x,y) {
+function cl(ev) {
+	if (t==0) {
+		t = 1
+		dataev = ev
+	}
+	else {
+		t = 0;
+		if_click = false;
+		lr_mouse(ev)
+	}
+}
+
+function find_blank(board,x,y,lr=false) {
+	if (lr==true){
+		if (playboard[y][x]==-3) {return;}
+	}
 	if (playboard[y][x]==-1||playboard[y][x]==-3) {}
 	else {return}
 	if (board[y][x]==-2) {
-		// console.log('dead')
-		lose()
-		return 'dead'
+		console.log('dead')	
+		if_lose = true;
+		draw_zone(board)
+		draw_win()
+		return
 	}
 	else if (board[y][x]==0) {
 		this.playboard[y][x] = 0
@@ -221,6 +257,7 @@ function find_blank(board,x,y) {
 	clean_canvas()
 	draw_border()
 	draw_zone(this.playboard)
+	draw_win()
 
 }
 
@@ -235,19 +272,18 @@ function make_board(num=0) {
 	return li
 }
 
-function win() {
+
+function draw_win() {
 	var canvas = document.getElementById('main');
 	var c = canvas.getContext("2d");
 	c.font = "30px bold 黑体";
-	c.fillStyle = 'white';
-	c.fillText('youwin',0,80)
-}
-function lose() {
-	var canvas = document.getElementById('main');
-	var c = canvas.getContext("2d");
-	c.font = "30px bold 黑体";
-	c.fillStyle = 'white';
-	c.fillText('youlose',0,80)
+	c.fillStyle = 'black';
+	if (if_win==true){
+		c.fillText('youwin',0,80)
+	}
+	else if (if_lose==true){
+		c.fillText('youlose',0,80)
+	}
 }
 
 main()
